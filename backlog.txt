@@ -1,0 +1,21 @@
+creating a base model
+- creating an image loader
+-- file or link (?) -> image
+-- image -> preprocessed image
+- initial training of the deep encoder 
+
+creating the ss model
+- training a new decoder
+- updating the encoder 
+- get new images from the web and process those
+- creating the image permuter
+- 
+
+testing
+- training the new decoder
+- heatmap
+- loss/accuracy curves
+
+
+report
+- address overfitting
