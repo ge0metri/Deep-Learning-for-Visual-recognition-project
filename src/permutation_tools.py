@@ -1,0 +1,93 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from keras_preprocessing.image import load_img
+from keras_preprocessing.image import img_to_array
+
+def main():
+    import os 
+    img1 = load_img(os.path.join(os.getcwd(), 'data_test/plantvillage/Apple___Apple_scab/0a5e9323-dbad-432d-ac58-d291718345d9___FREC_Scab 3417.JPG'), target_size=(120, 120))
+    img_data1 = img_to_array(img1, dtype = int)
+    showPermImg(*getPermutation(img_data1))
+    plt.show()
+
+def getPermutation(image_array, tilenumberx=3, shuffle = True):
+    """Takes an image as an array, and returns a permuted image as an array
+    with corresponding labels.
+    """
+    idx = range(tilenumberx**2)
+    if shuffle:
+        idx = np.random.permutation(tilenumberx**2)
+    tilesize_h = image_array.shape[0]//(tilenumberx)
+    tilesize_w = image_array.shape[1]//(tilenumberx)
+
+    tiles = [image_array[(i//3)*tilesize_h:(i//3+1)*tilesize_h,(i%tilenumberx)*tilesize_w:(i%tilenumberx+1)*tilesize_w,:] for i in idx]
+    out = np.array(tiles)
+    
+
+    return out, idx
+
+
+def showPermImg(X, y):
+    plt.figure(figsize=(3,3))
+    for i in range(9):
+        plt.subplot(3,3,i+1)
+        plt.imshow(X[i])
+        plt.xticks([]), plt.yticks([])
+        plt.title(int(y[i]))
+
+from keras.preprocessing.image import Iterator
+class PermNetDataGenerator(Iterator):
+
+    def __init__(self, input, batch_size=64,
+                 preprocess_func=None, shuffle=False):
+        if type(input) == list:
+            self.im_as_files = True
+            self.input_shape = (9,40,40,3) #should prob not be harcoded
+        else:
+            self.input_shape = self.images.shape[1:]
+        self.images = input
+        self.batch_size = batch_size
+        self.preprocess_func = preprocess_func
+        self.shuffle = shuffle
+
+        # add dimension if the images are greyscale
+        if len(self.input_shape) == 2:
+            self.input_shape = self.input_shape + (1,)
+        N = len(self.images)
+
+        super(PermNetDataGenerator, self).__init__(N, batch_size, shuffle, None)
+        
+    def _get_batches_of_transformed_samples(self, index_array):
+        # create array to hold the images
+        batch_x = np.zeros((len(index_array),) + self.input_shape, dtype='float32')
+        # create array to hold the labels
+        batch_y = np.zeros((len(index_array),9), dtype='float32')
+
+        # iterate through the current batch
+        for i, j in enumerate(index_array):
+            
+            if self.im_as_files:
+                image = img_to_array(load_img(self.images[j], target_size=(120, 120))) / 255 #should prob not be hardcoded
+            else:
+                image = self.images[j].squeeze()
+            X, y = getPermutation(image)
+            # store the image and label in their corresponding batches
+            batch_x[i] = X
+            batch_y[i] = y
+
+        # preprocess input images
+        if self.preprocess_func:
+            batch_x = self.preprocess_func(batch_x)
+
+        return batch_x, batch_y
+
+    def next(self):
+        with self.lock:
+            # get input data index and size of the current batch
+            index_array = next(self.index_generator)
+        # create array to hold the images
+        return self._get_batches_of_transformed_samples(index_array)
+
+
+if __name__=='__main__':
+    main()
