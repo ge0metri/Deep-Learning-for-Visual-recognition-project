@@ -77,7 +77,9 @@ class PermNetDataGenerator(Iterator):
 
         # preprocess input images
         if self.preprocess_func:
-            batch_x = self.preprocess_func(batch_x)
+            tiles = list(range(9))
+            for i in tiles:
+                batch_x[:,i:,:,:,:] = self.preprocess_func(batch_x[:,i:,:,:,:].squeeze())
 
         return batch_x, batch_y
 
