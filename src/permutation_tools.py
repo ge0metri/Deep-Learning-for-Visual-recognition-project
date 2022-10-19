@@ -17,12 +17,12 @@ def main():
     img_data1 = img_to_array(img1, dtype = int)
     showPermImg(*getPermutation(img_data1, 2), 2)
     
-    PermDict = PermMapToOneHot(4)
-    ReverseDict = {tuple(val):key for (key, val) in PermDict.items()}
-    dataGen = PermNetDataGenerator(['data_test/plantvillage/Apple___Apple_scab/0a5e9323-dbad-432d-ac58-d291718345d9___FREC_Scab 3417.JPG'],1,tilenumberx=2)
-    X,y = dataGen.next()
-    print(y)
-    showPermImg(X[0], ReverseDict[tuple(y[0])], 2)
+    # PermDict = PermMapToOneHot(4)
+    # ReverseDict = {tuple(val):key for (key, val) in PermDict.items()}
+    # dataGen = PermNetDataGenerator(['data_test/plantvillage/Apple___Apple_scab/0a5e9323-dbad-432d-ac58-d291718345d9___FREC_Scab 3417.JPG'],1,tilenumberx=2)
+    # X,y = dataGen.next()
+    # print(y)
+    # showPermImg(X[0], ReverseDict[tuple(y[0])], 2)
     plt.show()
 
 
@@ -66,8 +66,6 @@ class PermNetDataGenerator(Iterator):
         else:
             self.input_shape = self.images.shape[1:]
             self.images = input
-        if tilenumberx==2:
-            self.PermDict = PermMapToOneHot(tilenumberx**2)
         self.tilenumberx = tilenumberx
         self.batch_size = batch_size
         self.preprocess_func = preprocess_func
@@ -84,10 +82,7 @@ class PermNetDataGenerator(Iterator):
         # create array to hold the images
         batch_x = np.zeros((len(index_array),) + self.input_shape, dtype='float32')
         # create array to hold the labels
-        if self.tilenumberx == 2:
-            batch_y = np.zeros((len(index_array),np.math.factorial(self.tilenumberx**2)), dtype='float32')
-        else:
-            batch_y = np.zeros((len(index_array),self.tilenumberx**2), dtype='float32')
+        batch_y = np.zeros((len(index_array),self.tilenumberx**2), dtype='float32')
 
         # iterate through the current batch
         for i, j in enumerate(index_array):
@@ -96,7 +91,7 @@ class PermNetDataGenerator(Iterator):
                 image = img_to_array(load_img(self.images[j], target_size=(120, 120))) / 255 #should prob not be hardcoded
             else:
                 image = self.images[j].squeeze()
-            X, y = getPermutation(image, tilenumberx=self.tilenumberx, rules=self.PermDict)
+            X, y = getPermutation(image, tilenumberx=self.tilenumberx)
             # store the image and label in their corresponding batches
             batch_x[i] = X
             batch_y[i] = y
