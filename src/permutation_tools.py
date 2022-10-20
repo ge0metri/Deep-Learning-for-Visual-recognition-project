@@ -47,7 +47,7 @@ def getPermutation(image_array, tilenumberx=3, shuffle = True, rules = False):
 
 
 def showPermImg(X, y):
-    tilenum = len(X)
+    tilenum = int(len(y)**0.5)
     plt.figure(figsize=(tilenum,tilenum))
     for i in range(tilenum**2):
         plt.subplot(tilenum,tilenum,i+1)
