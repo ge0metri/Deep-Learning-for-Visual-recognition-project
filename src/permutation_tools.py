@@ -15,7 +15,7 @@ def main():
     import os 
     img1 = load_img(os.path.join(os.getcwd(), 'data_test/plantvillage/Apple___Apple_scab/0a5e9323-dbad-432d-ac58-d291718345d9___FREC_Scab 3417.JPG'), target_size=(255, 255))
     img_data1 = img_to_array(img1, dtype = int)
-    showPermImg(*getPermutation(img_data1, 2), 2)
+    showPermImg(*getPermutation(img_data1, 3))
     
     # PermDict = PermMapToOneHot(4)
     # ReverseDict = {tuple(val):key for (key, val) in PermDict.items()}
