@@ -20,7 +20,7 @@ from typing import Callable, Optional
 import gin
 import tensorflow as tf
 
-from . import perturbations
+import perturbations
 
 
 @gin.configurable
