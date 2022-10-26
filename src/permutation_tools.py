@@ -13,16 +13,16 @@ def PermMapToOneHot(num):
 
 def main():
     import os 
-    img1 = load_img(os.path.join(os.getcwd(), 'data_test/plantvillage/Apple___Apple_scab/0a5e9323-dbad-432d-ac58-d291718345d9___FREC_Scab 3417.JPG'), target_size=(120, 120))
+    img1 = load_img(os.path.join(os.getcwd(), 'data_test/plantvillage/Apple___Apple_scab/0a5e9323-dbad-432d-ac58-d291718345d9___FREC_Scab 3417.JPG'), target_size=(255, 255))
     img_data1 = img_to_array(img1, dtype = int)
-    showPermImg(*getPermutation(img_data1, 2), 2)
+    showPermImg(*getPermutation(img_data1, 3))
     
-    PermDict = PermMapToOneHot(4)
-    ReverseDict = {tuple(val):key for (key, val) in PermDict.items()}
-    dataGen = PermNetDataGenerator(['data_test/plantvillage/Apple___Apple_scab/0a5e9323-dbad-432d-ac58-d291718345d9___FREC_Scab 3417.JPG'],1,tilenumberx=2)
-    X,y = dataGen.next()
-    print(y)
-    showPermImg(X[0], ReverseDict[tuple(y[0])], 2)
+    # PermDict = PermMapToOneHot(4)
+    # ReverseDict = {tuple(val):key for (key, val) in PermDict.items()}
+    # dataGen = PermNetDataGenerator(['data_test/plantvillage/Apple___Apple_scab/0a5e9323-dbad-432d-ac58-d291718345d9___FREC_Scab 3417.JPG'],1,tilenumberx=2)
+    # X,y = dataGen.next()
+    # print(y)
+    # showPermImg(X[0], ReverseDict[tuple(y[0])], 2)
     plt.show()
 
 
@@ -46,7 +46,8 @@ def getPermutation(image_array, tilenumberx=3, shuffle = True, rules = False):
     return out, idx
 
 
-def showPermImg(X, y, tilenum = 3):
+def showPermImg(X, y):
+    tilenum = int(len(y)**0.5)
     plt.figure(figsize=(tilenum,tilenum))
     for i in range(tilenum**2):
         plt.subplot(tilenum,tilenum,i+1)
@@ -61,13 +62,11 @@ class PermNetDataGenerator(Iterator):
                  preprocess_func=None, shuffle=False, reuse = 1, tilenumberx = 3):
         if type(input) == list:
             self.im_as_files = True
-            self.input_shape = (tilenumberx**2,120//tilenumberx,120//tilenumberx,3)
+            self.input_shape = (tilenumberx**2,255//tilenumberx,255//tilenumberx,3)
             self.images = input*reuse
         else:
             self.input_shape = self.images.shape[1:]
             self.images = input
-        if tilenumberx==2:
-            self.PermDict = PermMapToOneHot(tilenumberx**2)
         self.tilenumberx = tilenumberx
         self.batch_size = batch_size
         self.preprocess_func = preprocess_func
@@ -84,19 +83,16 @@ class PermNetDataGenerator(Iterator):
         # create array to hold the images
         batch_x = np.zeros((len(index_array),) + self.input_shape, dtype='float32')
         # create array to hold the labels
-        if self.tilenumberx == 2:
-            batch_y = np.zeros((len(index_array),np.math.factorial(self.tilenumberx**2)), dtype='float32')
-        else:
-            batch_y = np.zeros((len(index_array),self.tilenumberx**2), dtype='float32')
+        batch_y = np.zeros((len(index_array),self.tilenumberx**2), dtype='float32')
 
         # iterate through the current batch
         for i, j in enumerate(index_array):
             
             if self.im_as_files:
-                image = img_to_array(load_img(self.images[j], target_size=(120, 120))) / 255 #should prob not be hardcoded
+                image = img_to_array(load_img(self.images[j], target_size=(255, 255))) / 255 #should prob not be hardcoded
             else:
                 image = self.images[j].squeeze()
-            X, y = getPermutation(image, tilenumberx=self.tilenumberx, rules=self.PermDict)
+            X, y = getPermutation(image, tilenumberx=self.tilenumberx)
             # store the image and label in their corresponding batches
             batch_x[i] = X
             batch_y[i] = y

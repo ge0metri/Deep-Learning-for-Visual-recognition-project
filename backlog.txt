@@ -19,3 +19,13 @@ testing
 
 report
 - address overfitting
+
+========================
+
+Add model_tools.py
+- has layers
+- has loss
+- has metric
+- has 
+
+
