@@ -2,15 +2,33 @@ import numpy as np
 import matplotlib.pyplot as plt
 from keras_preprocessing.image import load_img
 from keras_preprocessing.image import img_to_array
+from itertools import permutations
+
+
+def PermMapToOneHot(num):
+    perms = list(permutations(range(num)))
+    fact = np.math.factorial(num)
+    eye = np.eye(fact)
+    return {perms[i]:eye[i] for i in range(fact)}
 
 def main():
     import os 
     img1 = load_img(os.path.join(os.getcwd(), 'data_test/plantvillage/Apple___Apple_scab/0a5e9323-dbad-432d-ac58-d291718345d9___FREC_Scab 3417.JPG'), target_size=(120, 120))
     img_data1 = img_to_array(img1, dtype = int)
-    showPermImg(*getPermutation(img_data1))
+    showPermImg(*getPermutation(img_data1, 2), 2)
+    
+    PermDict = PermMapToOneHot(4)
+    ReverseDict = {tuple(val):key for (key, val) in PermDict.items()}
+    dataGen = PermNetDataGenerator(['data_test/plantvillage/Apple___Apple_scab/0a5e9323-dbad-432d-ac58-d291718345d9___FREC_Scab 3417.JPG'],1,tilenumberx=2)
+    X,y = dataGen.next()
+    print(y)
+    showPermImg(X[0], ReverseDict[tuple(y[0])], 2)
     plt.show()
 
-def getPermutation(image_array, tilenumberx=3, shuffle = True):
+
+    
+
+def getPermutation(image_array, tilenumberx=3, shuffle = True, rules = False):
     """Takes an image as an array, and returns a permuted image as an array
     with corresponding labels.
     """
@@ -20,17 +38,18 @@ def getPermutation(image_array, tilenumberx=3, shuffle = True):
     tilesize_h = image_array.shape[0]//(tilenumberx)
     tilesize_w = image_array.shape[1]//(tilenumberx)
 
-    tiles = [image_array[(i//3)*tilesize_h:(i//3+1)*tilesize_h,(i%tilenumberx)*tilesize_w:(i%tilenumberx+1)*tilesize_w,:] for i in idx]
+    tiles = [image_array[(i//tilenumberx)*tilesize_h:(i//tilenumberx+1)*tilesize_h,(i%tilenumberx)*tilesize_w:(i%tilenumberx+1)*tilesize_w,:] for i in idx]
     out = np.array(tiles)
-    
+    if rules:
+        idx = rules[tuple(idx)]
 
     return out, idx
 
 
-def showPermImg(X, y):
-    plt.figure(figsize=(3,3))
-    for i in range(9):
-        plt.subplot(3,3,i+1)
+def showPermImg(X, y, tilenum = 3):
+    plt.figure(figsize=(tilenum,tilenum))
+    for i in range(tilenum**2):
+        plt.subplot(tilenum,tilenum,i+1)
         plt.imshow(X[i])
         plt.xticks([]), plt.yticks([])
         plt.title(int(y[i]))
@@ -39,13 +58,17 @@ from keras.preprocessing.image import Iterator
 class PermNetDataGenerator(Iterator):
 
     def __init__(self, input, batch_size=64,
-                 preprocess_func=None, shuffle=False):
+                 preprocess_func=None, shuffle=False, reuse = 1, tilenumberx = 3):
         if type(input) == list:
             self.im_as_files = True
-            self.input_shape = (9,40,40,3) #should prob not be harcoded
+            self.input_shape = (tilenumberx**2,120//tilenumberx,120//tilenumberx,3)
+            self.images = input*reuse
         else:
             self.input_shape = self.images.shape[1:]
-        self.images = input
+            self.images = input
+        if tilenumberx==2:
+            self.PermDict = PermMapToOneHot(tilenumberx**2)
+        self.tilenumberx = tilenumberx
         self.batch_size = batch_size
         self.preprocess_func = preprocess_func
         self.shuffle = shuffle
@@ -61,7 +84,10 @@ class PermNetDataGenerator(Iterator):
         # create array to hold the images
         batch_x = np.zeros((len(index_array),) + self.input_shape, dtype='float32')
         # create array to hold the labels
-        batch_y = np.zeros((len(index_array),9), dtype='float32')
+        if self.tilenumberx == 2:
+            batch_y = np.zeros((len(index_array),np.math.factorial(self.tilenumberx**2)), dtype='float32')
+        else:
+            batch_y = np.zeros((len(index_array),self.tilenumberx**2), dtype='float32')
 
         # iterate through the current batch
         for i, j in enumerate(index_array):
@@ -70,14 +96,16 @@ class PermNetDataGenerator(Iterator):
                 image = img_to_array(load_img(self.images[j], target_size=(120, 120))) / 255 #should prob not be hardcoded
             else:
                 image = self.images[j].squeeze()
-            X, y = getPermutation(image)
+            X, y = getPermutation(image, tilenumberx=self.tilenumberx, rules=self.PermDict)
             # store the image and label in their corresponding batches
             batch_x[i] = X
             batch_y[i] = y
 
         # preprocess input images
         if self.preprocess_func:
-            batch_x = self.preprocess_func(batch_x)
+            tiles = list(range(self.tilenumberx**2))
+            for i in tiles:
+                batch_x[:,i:,:,:,:] = self.preprocess_func(batch_x[:,i:,:,:,:].squeeze())
 
         return batch_x, batch_y
 
@@ -87,6 +115,7 @@ class PermNetDataGenerator(Iterator):
             index_array = next(self.index_generator)
         # create array to hold the images
         return self._get_batches_of_transformed_samples(index_array)
+
 
 
 if __name__=='__main__':
