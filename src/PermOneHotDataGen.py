@@ -140,7 +140,10 @@ class PermOneHotDataGen(Iterator):
                     ) / 255 # should prob not be hardcoded
             else:
                 image = self.images[j].squeeze()
-            
+
+            if self.preprocess_func:
+                image = self.preprocess_func(image)
+
             perm = self.perms[j]
 
             if self.shuffle_permutations:
@@ -151,12 +154,6 @@ class PermOneHotDataGen(Iterator):
             # store the image and label in their corresponding batches
             batch_x[i] = X
             batch_y[i] = y
-
-        # preprocess input images
-        if self.preprocess_func:
-            tiles = list(range(self.tilenumberx**2))
-            for i in tiles:
-                batch_x[:,i:,:,:,:] = self.preprocess_func(batch_x[:,i:,:,:,:].squeeze())
 
         return batch_x, batch_y
 
