@@ -87,11 +87,11 @@ class PermOneHotDataGen(Iterator):
             self.images = input
         
         self.number_of_images = len(self.images)
-
+        self.number_of_different_perms = self.number_of_tiles
         self.PermDict = None
-
+        self.perms = [None]*self.number_of_images
         if not self.shuffle_permutations:
-            self.max_perms = 25
+            self.max_perms = 26
             self.number_of_different_perms = min(self.max_perms, np.math.factorial(self.number_of_tiles))
             self.PermDict = PermMapToOneHot(self.number_of_tiles, self.number_of_different_perms)
             self.ReverseDict = {tuple(val):key for (key, val) in self.PermDict.items()}
@@ -121,7 +121,7 @@ class PermOneHotDataGen(Iterator):
         print(self.labels[0]) 
 
 
-    def _get_batches_of_y(self, index_array):
+    def _get_batches_of_transformed_samples(self, index_array):
 
         # create array to hold the images
         batch_x = np.zeros((len(index_array), ) + self.input_shape, dtype='float32')
@@ -144,10 +144,11 @@ class PermOneHotDataGen(Iterator):
             if self.preprocess_func:
                 image = self.preprocess_func(image)
 
-            perm = self.perms[j]
 
             if self.shuffle_permutations:
                 perm = np.random.permutation(range(self.number_of_tiles))
+            else:
+                perm = self.perms[j]
 
             X, y = getPermutation(image, perm, self.PermDict, tilenumberx=self.tilenumberx)
             # permute image according to perm
@@ -160,7 +161,7 @@ class PermOneHotDataGen(Iterator):
     def next(self):
         with self.lock:
             index_array = next(self.index_generator)
-        return self._get_batches_of_y(index_array)
+        return self._get_batches_of_transformed_samples(index_array)
 
 
 
