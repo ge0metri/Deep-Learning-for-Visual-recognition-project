@@ -1,6 +1,6 @@
 import tensorflow as tf
 import fenchel_young
-
+from perturbations import perturbed
 
 def ranks_fn(x, axis=-1):
     return tf.cast(tf.argsort(tf.argsort(x, axis=axis), axis=axis), dtype=x.dtype)
@@ -18,7 +18,7 @@ class Ranking(tf.keras.layers.Layer):
         self.batched=batched
         super(Ranking, self).__init__()
     def call(self, inputs):
-        @perturbations.perturbed(num_samples=self.num_samples, sigma=self.sigma, noise=self.noise, batched=self.batched)
+        @perturbed(num_samples=self.num_samples, sigma=self.sigma, noise=self.noise, batched=self.batched)
         def ranks_fn(x, axis=-1):
             return tf.cast(tf.argsort(tf.argsort(x, axis=axis), axis=axis), dtype=x.dtype)
         return ranks_fn(inputs)
@@ -58,6 +58,7 @@ def main():
     myloss = RankingLoss()
     a = tf.convert_to_tensor([[1.,2,0],[0.,1,2]])
     b = tf.convert_to_tensor([[0.5,1,0.2],[0.,1,1.2]])
+    print('ranking layer of', a, 'is', Ranking()(a))
     print('Loss of', a, b, 'is', myloss(a,b).numpy())
     a = tf.convert_to_tensor([[1.,2,0],[0.,1,2]])
     b = tf.convert_to_tensor([[1,2,0.2],[0.,1,1.2]])
