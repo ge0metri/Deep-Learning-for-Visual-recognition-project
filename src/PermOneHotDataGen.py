@@ -27,6 +27,49 @@ def PermMapToOneHot(num, number_of_different_perms):
     eye = np.eye(number_of_different_perms)
     return {perms[i]:eye[i] for i in range(number_of_different_perms)}
     
+def getSubsetPermutation(image_as_array, perm: tuple, label_from_perm=None, tilenumberx=3):
+    """
+    Takes an image as an array and a corresponding permutations
+    that agrees with tilenumberx, and returns a permuted subset image as an array
+    args: 
+        perm: tuple of tilnumberx numbers permutated, plus a number if horizontal or not
+              i.e. [1,0,2,1] would mean horizantal three tiles would be mixed. 
+                   [0,0,2,1] would mean vertical three tiles would be mixed.
+    """
+
+    idx = perm[1:]
+    vert_not_hori = perm[0]
+    tilesize_h = image_as_array.shape[0]//(tilenumberx)
+    tilesize_w = image_as_array.shape[1]//(tilenumberx)
+    
+    if vert_not_hori:
+        tiles = [
+            image_as_array[
+                (i)*tilesize_h:(i+1)*tilesize_h, # cutting x dim
+                (tilenumberx//2)*tilesize_w:(tilenumberx//2+1)*tilesize_w,   # cutting middle y dim
+                :                                                          # keep channels
+                ]
+                for i in idx
+            ]
+    else:
+        tiles = [
+            image_as_array[
+                (tilenumberx//2)*tilesize_h:(tilenumberx//2+1)*tilesize_h, # cutting middle x dim
+                (i)*tilesize_w:(i+1)*tilesize_w,   # cutting y dim
+                :                                                          # keep channels
+                ]
+                for i in idx
+            ]
+
+
+
+    out = np.array(tiles)
+
+    if label_from_perm:
+        label = label_from_perm[idx]
+        return out, label 
+    
+    return out, perm
 
 def getPermutation(image_as_array, perm: tuple, label_from_perm=None, tilenumberx=3):
     """
