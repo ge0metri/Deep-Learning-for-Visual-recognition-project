@@ -89,6 +89,7 @@ class PermOneHotDataGen(Iterator):
         self.number_of_images = len(self.images)
 
         self.PermDict = None
+        self.label_dimension = self.number_of_tiles
 
         self.shuffle_permutation() 
 
@@ -109,6 +110,7 @@ class PermOneHotDataGen(Iterator):
             self.perms_labels = random.choices(list(self.PermDict.items()), k=self.number_of_images) # with replacement
             self.perms = [perm_label[0] for perm_label in self.perms_labels] # actual permutation
             self.labels = [perm_label[1] for perm_label in self.perms_labels] # corresponding label
+            self.label_dimension = self.number_of_different_perms
 
 
     def get_perm_from_label(self, label):
@@ -130,7 +132,7 @@ class PermOneHotDataGen(Iterator):
         batch_x = np.zeros((len(index_array), ) + self.input_shape, dtype='float32')
 
         # create array to hold the labels
-        batch_y = np.zeros((len(index_array), self.number_of_different_perms), dtype='float32')
+        batch_y = np.zeros((len(index_array), self.label_dimension), dtype='float32')
 
 
 
@@ -163,7 +165,7 @@ class PermOneHotDataGen(Iterator):
     def next(self):
         with self.lock:
             index_array = next(self.index_generator)
-        return self._get_batches_of_y(index_array)
+        return self._get_batches_of_transformed_samples(index_array)
 
 
 
