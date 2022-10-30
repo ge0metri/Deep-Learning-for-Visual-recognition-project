@@ -90,14 +90,7 @@ class PermOneHotDataGen(Iterator):
 
         self.PermDict = None
 
-        if not self.shuffle_permutations:
-            self.max_perms = 25
-            self.number_of_different_perms = min(self.max_perms, np.math.factorial(self.number_of_tiles))
-            self.PermDict = PermMapToOneHot(self.number_of_tiles, self.number_of_different_perms)
-            self.ReverseDict = {tuple(val):key for (key, val) in self.PermDict.items()}
-            self.perms_labels = random.choices(list(self.PermDict.items()), k=self.number_of_images) # with replacement
-            self.perms = [perm_label[0] for perm_label in self.perms_labels] # actual permutation
-            self.labels = [perm_label[1] for perm_label in self.perms_labels] # corresponding label 
+        self.shuffle_permutation() 
 
         # add dimension if the images are greyscale
         if len(self.input_shape) == 2:
@@ -106,6 +99,16 @@ class PermOneHotDataGen(Iterator):
 
         super(PermOneHotDataGen, self).__init__(
             self.number_of_images, batch_size, shuffle_permutations, None)
+
+    def shuffle_permutation(self):
+        if not self.shuffle_permutations:
+            self.max_perms = 25
+            self.number_of_different_perms = min(self.max_perms, np.math.factorial(self.number_of_tiles))
+            self.PermDict = PermMapToOneHot(self.number_of_tiles, self.number_of_different_perms)
+            self.ReverseDict = {tuple(val):key for (key, val) in self.PermDict.items()}
+            self.perms_labels = random.choices(list(self.PermDict.items()), k=self.number_of_images) # with replacement
+            self.perms = [perm_label[0] for perm_label in self.perms_labels] # actual permutation
+            self.labels = [perm_label[1] for perm_label in self.perms_labels] # corresponding label
 
 
     def get_perm_from_label(self, label):
@@ -121,7 +124,7 @@ class PermOneHotDataGen(Iterator):
         print(self.labels[0]) 
 
 
-    def _get_batches_of_y(self, index_array):
+    def _get_batches_of_transformed_samples(self, index_array):
 
         # create array to hold the images
         batch_x = np.zeros((len(index_array), ) + self.input_shape, dtype='float32')
