@@ -55,20 +55,45 @@ def getPermutation(image_as_array, perm: tuple, label_from_perm=None, tilenumber
     
     return out, perm
 
+def getStitchedPermutation(image_as_array, perm: tuple, label_from_perm=None, tilenumberx=3):
+    """
+    Takes an image as an array and a corresponding permutations
+    that agrees with tilenumberx, and returns a permuted image as an array
+    """
+
+    idx = perm
+    tilesize_h = image_as_array.shape[0]//(tilenumberx)
+    tilesize_w = image_as_array.shape[1]//(tilenumberx)
+    tiles = np.zeros(image_as_array.shape)
+    for i, r in enumerate(idx):
+        tiles[(r//tilenumberx)*tilesize_h:(r//tilenumberx+1)*tilesize_h, (i%tilenumberx)*tilesize_w:(i%tilenumberx+1)*tilesize_w, :] \
+            = image_as_array[
+            (r//tilenumberx)*tilesize_h:(r//tilenumberx+1)*tilesize_h, # cutting x dim
+            (r%tilenumberx)*tilesize_w:(r%tilenumberx+1)*tilesize_w,   # cutting y dim
+            :                                                          # keep channels
+            ]
+    out = np.array(tiles)
+
+    if label_from_perm:
+        label = label_from_perm[idx]
+        return out, label 
+    
+    return out, perm
+
 class PermOneHotDataGen(Iterator):
     def __init__(self, input, batch_size=64,
                  preprocess_func=None, 
                  reuse = 1, tilenumberx = 3,
-                 shuffle_permutations=False, shuffle=True, max_perms=25):
+                 shuffle_permutations=False, shuffle=True, max_perms=25, target_size=(255,255,3), stitched=False):
 
-        
+        self.stitched = stitched
         self.tilenumberx = tilenumberx
         self.batch_size = batch_size
         self.preprocess_func = preprocess_func
         self.shuffle_permutations = shuffle_permutations
         self.shuffle = shuffle 
 
-        self.size_of_image = (255,255)
+        self.size_of_image = target_size
 
         self.number_of_tiles = tilenumberx**2
 
@@ -78,7 +103,7 @@ class PermOneHotDataGen(Iterator):
                 self.number_of_tiles, 
                 self.size_of_image[0]//tilenumberx, # x dimension
                 self.size_of_image[1]//tilenumberx, # y dimension
-                3                                   # number of channels
+                self.size_of_image[2]               # number of channels
                 )
 
             self.images = input * reuse
@@ -124,7 +149,10 @@ class PermOneHotDataGen(Iterator):
     def _get_batches_of_transformed_samples(self, index_array):
 
         # create array to hold the images
-        batch_x = np.zeros((len(index_array), ) + self.input_shape, dtype='float32')
+        if self.stitched:
+            batch_x = np.zeros((len(index_array), ) + self.size_of_image, dtype='float32')
+        else:
+            batch_x = np.zeros((len(index_array), ) + self.input_shape, dtype='float32')
         #batch_x = np.zeros((self.number_of_tiles,) +(len(index_array), ) + self.input_shape[1:], dtype='float32')
 
         # create array to hold the labels
@@ -138,20 +166,24 @@ class PermOneHotDataGen(Iterator):
             if self.im_as_files:
                 image = img_to_array(
                     load_img(self.images[j], target_size=self.size_of_image)
-                    ) / 255 # should prob not be hardcoded
+                    ) # should prob not be hardcoded
             else:
                 image = self.images[j].squeeze()
 
             if self.preprocess_func:
                 image = self.preprocess_func(image)
+            else:
+                image = image/255
 
 
             if self.shuffle_permutations:
                 perm = np.random.permutation(range(self.number_of_tiles))
             else:
                 perm = self.perms[j]
-
-            X, y = getPermutation(image, perm, self.PermDict, tilenumberx=self.tilenumberx)
+            if self.stitched:
+               X, y = getStitchedPermutation(image, perm, self.PermDict, tilenumberx=self.tilenumberx)
+            else:
+               X, y = getPermutation(image, perm, self.PermDict, tilenumberx=self.tilenumberx)
             # permute image according to perm
             # store the image and label in their corresponding batches
             batch_x[i] = X
@@ -171,7 +203,7 @@ def main():
     import os 
     from pathlib import Path
 
-    PATH = Path('../data_test/plantvillage/Apple___Apple_scab/0a5e9323-dbad-432d-ac58-d291718345d9___FREC_Scab 3417.JPG') 
+    PATH = Path('./data_test/plantvillage/Apple___Apple_scab/0a5e9323-dbad-432d-ac58-d291718345d9___FREC_Scab 3417.JPG') 
     tilenumberx = [2,3]
     for i in tilenumberx:
         datagenerator = PermOneHotDataGen(input=[PATH],batch_size=1,tilenumberx=i)
@@ -192,6 +224,10 @@ def main():
     assert len(perm) == number_tiles_x**2, "Perm does not match number of tiles!"
     permuted_image, label = getPermutation(img_data1, perm, PermutationDict, tilenumberx=number_tiles_x)
     showPermImg(permuted_image, ReverseDict[tuple(label)], tilenum=number_tiles_x)
+    plt.show()
+
+    perm_img, label = getStitchedPermutation(img_data1, perm, PermutationDict, tilenumberx=number_tiles_x)
+    plt.imshow(perm_img/255)
     plt.show()
 
 
