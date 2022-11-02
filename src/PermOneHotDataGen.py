@@ -124,8 +124,8 @@ class PermOneHotDataGen(Iterator):
     def _get_batches_of_transformed_samples(self, index_array):
 
         # create array to hold the images
-        #batch_x = np.zeros((len(index_array), ) + self.input_shape, dtype='float32')
-        batch_x = np.zeros((self.number_of_tiles,) +(len(index_array), ) + self.input_shape[1:], dtype='float32')
+        batch_x = np.zeros((len(index_array), ) + self.input_shape, dtype='float32')
+        #batch_x = np.zeros((self.number_of_tiles,) +(len(index_array), ) + self.input_shape[1:], dtype='float32')
 
         # create array to hold the labels
         batch_y = np.zeros((len(index_array), self.number_of_different_perms), dtype='float32')
@@ -154,8 +154,8 @@ class PermOneHotDataGen(Iterator):
             X, y = getPermutation(image, perm, self.PermDict, tilenumberx=self.tilenumberx)
             # permute image according to perm
             # store the image and label in their corresponding batches
-            #batch_x[i] = X
-            batch_x[:,i,:,:,:] = X
+            batch_x[i] = X
+            #batch_x[:,i,:,:,:] = X
             batch_y[i] = y
 
         return batch_x, batch_y
