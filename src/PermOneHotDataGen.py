@@ -92,7 +92,8 @@ class PermOneHotDataGen(Iterator):
                  max_perms=25, 
                  target_size=(255,255,3), 
                  stitched=False,
-                 one_hot_encoding=False):
+                 one_hot_encoding=False,
+                 Permutations_dictionary=None):
                  
         self.one_hot_encoding = one_hot_encoding
         self.stitched = stitched
@@ -122,12 +123,13 @@ class PermOneHotDataGen(Iterator):
             self.images = input
         
         self.number_of_images = len(self.images)
-        self.PermDict = None
+        self.PermDict = Permutations_dictionary 
         self.perms = [None]*self.number_of_images
 
         self.max_perms = max_perms
         self.number_of_different_perms = min(self.max_perms, np.math.factorial(self.number_of_tiles))
-        self.PermDict = PermMapToOneHot(self.number_of_tiles, self.number_of_different_perms)
+        if not Permutations_dictionary:
+            self.PermDict = PermMapToOneHot(self.number_of_tiles, self.number_of_different_perms)
         self.ReverseDict = {tuple(val):key for (key, val) in self.PermDict.items()}
         self.perms_labels = random.choices(list(self.PermDict.items()), k=self.number_of_images) # with replacement
         self.perms = [perm_label[0] for perm_label in self.perms_labels] # actual permutation
@@ -143,6 +145,9 @@ class PermOneHotDataGen(Iterator):
 
         super(PermOneHotDataGen, self).__init__(
             self.number_of_images, batch_size, shuffle, None)
+
+    def get_perm_dict(self):
+        return self.PermDict
 
 
     def get_perm_from_label(self, label):
@@ -247,6 +252,32 @@ def main():
 
     for i in tilenumberx:
         datagenerator = PermOneHotDataGen(input=[PATH],batch_size=1,tilenumberx=i, shuffle_permutations=True, one_hot_encoding=True)
+        datagenerator.test_data_gen()
+        X,y = datagenerator.next()
+        print(y)
+        created_label = datagenerator.get_perm_from_label(tuple(y[0]))
+        print(created_label)
+        showPermImg(X[0], created_label, i)
+        plt.show()
+
+    for i in tilenumberx:
+        datagenerator_get_dict = PermOneHotDataGen(
+            input=[PATH],
+            batch_size=1,
+            tilenumberx=i, 
+            shuffle_permutations=True, 
+            one_hot_encoding=True)
+        perm_dict_1 = datagenerator_get_dict.get_perm_dict() 
+        datagenerator = PermOneHotDataGen(
+            input=[PATH],
+            batch_size=1,
+            tilenumberx=i, 
+            shuffle_permutations=True, 
+            one_hot_encoding=True,
+            Permutations_dictionary=perm_dict_1)
+        
+        perm_dict_2 = datagenerator.get_perm_dict()
+        print(perm_dict_1 == perm_dict_2)
         datagenerator.test_data_gen()
         X,y = datagenerator.next()
         print(y)
