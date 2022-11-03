@@ -142,7 +142,7 @@ class PermOneHotDataGen(Iterator):
 
 
         super(PermOneHotDataGen, self).__init__(
-            self.number_of_images, batch_size, shuffle_permutations, None)
+            self.number_of_images, batch_size, shuffle, None)
 
 
     def get_perm_from_label(self, label):
