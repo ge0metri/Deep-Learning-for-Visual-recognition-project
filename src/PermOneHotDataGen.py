@@ -2,86 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 from keras_preprocessing.image import load_img
 from keras_preprocessing.image import img_to_array
-from itertools import permutations
+from helper import *
 
 from keras.preprocessing.image import Iterator
-import random
 
 
-def showPermImg(X, perm = None, tilenum = 3):
-    plt.figure(figsize=(tilenum,tilenum))
-    for i in range(tilenum**2):
-        plt.subplot(tilenum,tilenum,i+1)
-        plt.imshow(X[i])
-        plt.xticks([]), plt.yticks([])
-        plt.title(int(perm[i]))
-
-def PermMapToOneHot(num, number_of_different_perms):
-    """
-    creates a subset of size "number_of_different_perms" of permutations the range of "num"
-    """
-    assert int(num) < 10, "Please choose a smaller number of tiles!"
-    assert number_of_different_perms <= np.math.factorial(num), "There are not that many permutations!"
-    all_permutations = list(permutations(range(num)))
-    perms = random.sample(all_permutations, number_of_different_perms) # without replacement 
-    eye = np.eye(number_of_different_perms)
-    return {perms[i]:eye[i] for i in range(number_of_different_perms)}
-    
-    
-def getPermutation(image_as_array, perm: tuple, label_from_perm=None, tilenumberx=3):
-    """
-    Takes an image as an array and a corresponding permutations
-    that agrees with tilenumberx, and returns a permuted image as an array
-    """
-
-    idx = perm
-    tilesize_h = image_as_array.shape[0]//(tilenumberx)
-    tilesize_w = image_as_array.shape[1]//(tilenumberx)
-
-    tiles = [
-        image_as_array[
-            (i//tilenumberx)*tilesize_h:(i//tilenumberx+1)*tilesize_h, # cutting x dim
-            (i%tilenumberx)*tilesize_w:(i%tilenumberx+1)*tilesize_w,   # cutting y dim
-            :                                                          # keep channels
-            ]
-            for i in idx
-        ]
-
-    out = np.array(tiles)
-
-    if label_from_perm:
-        label = label_from_perm[idx]
-        return out, label 
-    
-    return out, perm
-
-def getStitchedPermutation(image_as_array, perm: tuple, label_from_perm=None, tilenumberx=3):
-    """
-    Takes an image as an array and a corresponding permutations
-    that agrees with tilenumberx, and returns a permuted image as an array
-    """
-
-    idx = perm
-    tilesize_h = image_as_array.shape[0]//(tilenumberx)
-    tilesize_w = image_as_array.shape[1]//(tilenumberx)
-    tiles = np.zeros(image_as_array.shape)
-    for i, r in enumerate(idx):
-        tiles[
-            (r//tilenumberx)*tilesize_h:(r//tilenumberx+1)*tilesize_h,
-            (i%tilenumberx)*tilesize_w:(i%tilenumberx+1)*tilesize_w,
-            :
-            ] = image_as_array[
-            (r//tilenumberx)*tilesize_h:(r//tilenumberx+1)*tilesize_h, # cutting x dim
-            (r%tilenumberx)*tilesize_w:(r%tilenumberx+1)*tilesize_w,   # cutting y dim
-            :                                                          # keep channels
-            ]
-    out = np.array(tiles)
-
-    if label_from_perm:
-        label = label_from_perm[idx]
-        return out, label 
-    
-    return out, perm
 
 class PermOneHotDataGen(Iterator):
     def __init__(self, input, batch_size=64,
@@ -180,7 +105,7 @@ class PermOneHotDataGen(Iterator):
             if self.im_as_files:
                 image = img_to_array(
                     load_img(self.images[j], target_size=self.size_of_image)
-                    ) # should prob not be hardcoded
+                    ) 
             else:
                 image = self.images[j].squeeze()
 
@@ -219,8 +144,6 @@ class PermOneHotDataGen(Iterator):
 
 
 def main():
-    import os 
-    from pathlib import Path
 
     PATH = Path('./data_test/plantvillage/Apple___Apple_scab/0a5e9323-dbad-432d-ac58-d291718345d9___FREC_Scab 3417.JPG') 
     tilenumberx = [2,3]
@@ -303,6 +226,41 @@ def main():
 
 
 
+def test():
+    PATH = Path('../data_test/plantvillage/Apple___Apple_scab/0a5e9323-dbad-432d-ac58-d291718345d9___FREC_Scab 3417.JPG') 
+    img1 = load_img(PATH, target_size=(255,255))
+    img_data1 = img_to_array(img1, dtype = int)
+    perm = (7, 4, 3, 2, 8, 5, 1, 6, 0)
+
+    perm_img, label = getPermutation(
+        img_data1,
+        perm
+        )
+    showPermImg(perm_img/255, perm)
+    plt.show()
+
+    perm_img, label = getStitchedPermutation_four_tiles(
+        img_data1,
+        perm
+        )
+    plt.imshow(perm_img/255)
+    plt.title("get stitched old")
+    plt.show()
+
+    perm_img, label = getStitchedPermutation(
+        img_data1,
+        perm
+        )
+
+    print(perm_img.shape)
+    plt.title("get stitched new")
+    print(label)
+    plt.imshow(perm_img/255)
+    plt.show()
+
 
 if __name__=='__main__':
-    main()
+    import os 
+    from pathlib import Path
+    test()
+    # main()
