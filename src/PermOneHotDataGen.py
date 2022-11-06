@@ -67,7 +67,7 @@ def getStitchedPermutation(image_as_array, perm: tuple, label_from_perm=None, ti
     tiles = np.zeros(image_as_array.shape)
     for i, r in enumerate(idx):
         tiles[
-            (r//tilenumberx)*tilesize_h:(r//tilenumberx+1)*tilesize_h,
+            (i//tilenumberx)*tilesize_h:(i//tilenumberx+1)*tilesize_h,
             (i%tilenumberx)*tilesize_w:(i%tilenumberx+1)*tilesize_w,
             :
             ] = image_as_array[
