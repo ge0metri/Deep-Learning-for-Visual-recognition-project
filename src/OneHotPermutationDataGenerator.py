@@ -56,7 +56,11 @@ class OneHotPermutationDataGenerator(BasePermutationDataGenerator):
             
             image = self.preprocessing_function(image)
             perm = self.get_perm(j)
-            X, _ = self.get_permuted_image(image, perm, None, tilenumberx=self.tile_number_x)
+            X, _ = self.get_permuted_image(
+                image, 
+                perm, 
+                None, 
+                tilenumberx=self.tile_number_x)
 
             batch_x[i] = X
             batch_y[i] = self.perm_dict[tuple(perm)]       
