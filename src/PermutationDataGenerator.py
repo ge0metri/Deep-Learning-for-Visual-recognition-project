@@ -10,7 +10,7 @@ from helper import *
 class PermutationDataGenerator(Iterator):
     def __init__(
         self, input, batch_size=64,
-        reuse = 1, tile_number_x = 3,
+        reuse=1, tile_number_x=3,
         max_perms=25, target_size=(255,255,3),
         permutation_dict=None,
         stitched=False,
