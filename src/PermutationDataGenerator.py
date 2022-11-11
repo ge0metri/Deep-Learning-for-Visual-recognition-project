@@ -1,10 +1,10 @@
 import numpy as np
 
 from keras.preprocessing.image import Iterator
-from keras_preprocessing.image import load_img
-from keras_preprocessing.image import img_to_array
+from tensorflow.keras.utils import load_img, img_to_array
 
-from helper import *  
+from helper import * 
+from cropping_tools import CropTool
 
 
 class PermutationDataGenerator(Iterator):
@@ -12,19 +12,22 @@ class PermutationDataGenerator(Iterator):
         self, input, batch_size=64,
         reuse = 1, tile_number_x = 3,
         max_perms=25, target_size=(255,255,3),
+        load_size=(255,255,3),
         permutation_dict=None,
         stitched=False,
         shuffle=True,  
         shuffle_permutations=True,
         preprocess_func=divide_by_255,
-        one_hot_encoding=True
+        one_hot_encoding=True,
+        crop=False
         ):
         
         # metadata of the ML process
         self.batch_size = batch_size
         
         # metadata about the image
-        self.size_of_image = target_size
+        self.target_size = target_size
+        self.size_of_image = load_size
         self.tile_number_x = tile_number_x
         self.number_of_tiles = tile_number_x**2
 
@@ -51,6 +54,7 @@ class PermutationDataGenerator(Iterator):
 
 
         self.stitched = stitched
+        self.crop = crop
         self.get_permuted_image = getPermutation
 
         self.output_size = self.input_shape
@@ -59,6 +63,10 @@ class PermutationDataGenerator(Iterator):
         if self.stitched:
             self.get_permuted_image = getStitchedPermutation
             self.output_size = self.size_of_image
+
+        if self.crop:
+            self.get_permuted_image = CropTool(self.target_size)
+            self.output_size = self.target_size
 
         # metadata about the permutations
         self.number_of_different_perms = min(
@@ -126,7 +134,7 @@ class PermutationDataGenerator(Iterator):
         return self.perm_dict[perm]
 
 
-    def get_batches(self, index_array):
+    def _get_batches_of_transformed_samples(self, index_array):
 
         # features and labels 
         batch_x = np.zeros(
@@ -154,6 +162,7 @@ class PermutationDataGenerator(Iterator):
             image = self.preprocessing_function(image)
             perm = self.get_perm(j)
             X, _ = self.get_permuted_image(image, perm, None, tilenumberx=self.tile_number_x)
+            #X, _ = getStitchCropPermutation(image, perm, None, tilenumberx=self.tile_number_x, target_size=self.target_size)
 
             batch_x[i] = X
             batch_y[i] =  self.get_label_from_permutation(perm)
@@ -164,7 +173,7 @@ class PermutationDataGenerator(Iterator):
     def next(self):
         with self.lock:
             index_array = next(self.index_generator)
-        return self.get_batches(index_array)
+        return self._get_batches_of_transformed_samples(index_array)
 
     
     def __str__(self) -> str:

@@ -17,7 +17,7 @@ def random_crop(img_as_array, target_size=(255,255)) -> np.ndarray:
     assert new_img.shape[:2] == target_size, f"{new_img.shape[:2]} != {target_size}"
     return new_img
 
-def getStitchedPermutation(image_as_array, perm: tuple, label_from_perm=None, tilenumberx=3, target_size=None):
+def getStitchCropPermutation(image_as_array, perm: tuple, label_from_perm=None, tilenumberx=3, target_size=None):
     """
     Takes an image as an array and a corresponding permutations
     that agrees with tilenumberx, and returns a permuted image as an array
@@ -29,7 +29,7 @@ def getStitchedPermutation(image_as_array, perm: tuple, label_from_perm=None, ti
     channels = image_as_array.shape[2]
     if not target_size:
         target_size = (image_as_array.shape[:2])
-    tiles = np.zeros(target_size+(channels,), dtype=int)
+    tiles = np.zeros(target_size[:2]+(channels,), dtype=int)
     target_tile_h = target_size[0]//tilenumberx
     target_tile_w = target_size[1]//tilenumberx
     for i, r in enumerate(idx):
@@ -55,7 +55,11 @@ def getStitchedPermutation(image_as_array, perm: tuple, label_from_perm=None, ti
     
     return out, perm
 
-
+class CropTool():
+    def __init__(self, target_size=None) -> None:
+        self.target_size = target_size
+    def __call__(self, image, perm: tuple, label_from_perm=None, tilenumberx=3):
+        return getStitchCropPermutation(image, perm, label_from_perm=label_from_perm, tilenumberx=tilenumberx, target_size=self.target_size)
 
 def main():
     from pathlib import Path
@@ -66,14 +70,14 @@ def main():
     plt.show()
     plt.imshow(random_crop(img_data1, target_size=(224,224)))
     plt.show()
-    plt.imshow(getStitchedPermutation(img_data1, (1,2,3,4,5,6,8,0,7))[0])
+    plt.imshow(getStitchCropPermutation(img_data1, (1,2,3,4,5,6,8,0,7))[0])
     plt.show()
-    plt.imshow(getStitchedPermutation(img_data1, (1,2,3,4,5,6,8,0,7),  target_size=(224,224))[0])
+    plt.imshow(getStitchCropPermutation(img_data1, (1,2,3,4,5,6,8,0,7),  target_size=(224,224))[0])
     plt.show()
     PATH = Path("./data_test/Plantdoc/Apple_rust_leaf_test/20130519cedarapplerust.jpg")
     img1 = load_img(PATH, target_size=(224,224))
     img_data1 = img_to_array(img1, dtype = int)
-    plt.imshow(getStitchedPermutation(img_data1, (1,2,3,4,5,6,8,0,7))[0])
+    plt.imshow(getStitchCropPermutation(img_data1, (1,2,3,4,5,6,8,0,7))[0])
     plt.show()
     
     PATH = Path("./data_test/Plantdoc/Apple_rust_leaf_test/20130610_110514.jpg")
