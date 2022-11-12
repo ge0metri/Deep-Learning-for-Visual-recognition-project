@@ -126,7 +126,7 @@ class PermutationDataGenerator(Iterator):
         return self.perm_dict[perm]
 
 
-    def get_batches(self, index_array):
+    def _get_batches_of_transformed_samples(self, index_array):
 
         # features and labels 
         batch_x = np.zeros(
@@ -164,7 +164,7 @@ class PermutationDataGenerator(Iterator):
     def next(self):
         with self.lock:
             index_array = next(self.index_generator)
-        return self.get_batches(index_array)
+        return self._get_batches_of_transformed_samples(index_array)
 
     
     def __str__(self) -> str:
