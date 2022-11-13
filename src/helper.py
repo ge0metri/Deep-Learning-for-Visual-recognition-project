@@ -56,7 +56,7 @@ def getPermutation(image_as_array, perm: tuple, label_from_perm=None, tilenumber
     
     return out, perm
 
-def getStitchedPermutation(image_as_array, perm: tuple, label_from_perm=None, tilenumberx=3):
+def getStitchedPermutationConcat(image_as_array, perm: tuple, label_from_perm=None, tilenumberx=3):
     """
     Takes an image as an array and a corresponding permutations
     that agrees with tilenumberx, and returns a permuted image as an array
@@ -94,7 +94,7 @@ def getStitchedPermutation(image_as_array, perm: tuple, label_from_perm=None, ti
     
     return out, perm
 
-def getStitchedPermutation_four_tiles(image_as_array, perm: tuple, label_from_perm=None, tilenumberx=3):
+def getStitchedPermutation(image_as_array, perm: tuple, label_from_perm=None, tilenumberx=3):
     """
     Takes an image as an array and a corresponding permutations
     that agrees with tilenumberx, and returns a permuted image as an array
@@ -106,7 +106,7 @@ def getStitchedPermutation_four_tiles(image_as_array, perm: tuple, label_from_pe
     tiles = np.zeros(image_as_array.shape)
     for i, r in enumerate(idx):
         tiles[
-            (r//tilenumberx)*tilesize_h:(r//tilenumberx+1)*tilesize_h,
+            (i//tilenumberx)*tilesize_h:(i//tilenumberx+1)*tilesize_h,
             (i%tilenumberx)*tilesize_w:(i%tilenumberx+1)*tilesize_w,
             :
             ] = image_as_array[
