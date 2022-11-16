@@ -267,7 +267,7 @@ def perform_experiment(
         preprocess_func=preprocessing_func,
         permutation_dict=jigsaw_train_datagen.get_perm_dict(),
         shuffle=False)
-
+    
     if one_hot_encoding:
         model_jigsaw.compile(optimizer=optimizer,
             loss=tf.keras.losses.CategoricalCrossentropy(),
@@ -302,7 +302,13 @@ def perform_experiment(
     # to be sure
     for layer in model_fine_tuning.layers:
         layer.trainable=True
-
+    optimizer = tf.keras.optimizers.Adam(
+        learning_rate=0.0001,
+        beta_1=0.9,
+        beta_2=0.999,
+        epsilon=1e-07,
+        amsgrad=False,
+        name='Adam')
     if one_hot_encoding:
         model_fine_tuning.compile(optimizer=optimizer,
             loss=tf.keras.losses.CategoricalCrossentropy(),
@@ -339,7 +345,13 @@ def perform_experiment(
         number_of_layers_source=-3,
         number_of_layers_target=-2     #TODO: double check 
     )
-
+    optimizer = tf.keras.optimizers.Adam(
+        learning_rate=0.001,
+        beta_1=0.9,
+        beta_2=0.999,
+        epsilon=1e-07,
+        amsgrad=False,
+        name='Adam')
     model_improved.compile(
         loss='categorical_crossentropy',
         optimizer=optimizer,
@@ -397,14 +409,20 @@ def main():
         file_list += current_file_list
         labels += [label] * len(current_file_list)
 
-    print(len(file_list))
+    print(number_of_load := len(file_list))
     print(len(labels))
-    image_set_A = file_list[:100]
-    image_set_B = file_list[100:200]
 
+    number_of_files = 1000 #len(file_list)
+    A_slice, B_slice = train_test_split(range(number_of_load), train_size=0.75)
+    A_slice = A_slice[:number_of_files]
+    A_slice = B_slice[:number_of_files]
+
+    image_set_A = list(np.array(file_list)[A_slice])
+    image_set_B = list(np.array(file_list)[B_slice])
+    print(len(image_set_A), len(image_set_B))
 
     labels = to_categorical(labels)
-    labels_A = labels[:100,:]
+    labels_A = labels[A_slice,:]
     (
         history_baseline, 
         history_jigsaw, 
@@ -416,9 +434,18 @@ def main():
         image_set_A=image_set_A, 
         image_set_B=image_set_B, 
         set_A_labels=labels_A, 
-        test_mode=True)
-
-
+        test_mode=True,
+        )
+    import pickle
+    import pickle
+    # Saving the objects:
+    with open('objs.pkl', 'wb') as f:  # Python 3: open(..., 'wb')
+        pickle.dump([history_baseline, 
+                    history_jigsaw, 
+                    history_fine_tuning, 
+                    history_improved, 
+                    score_baseline, 
+                    score_improved ], f)
     
 
 
