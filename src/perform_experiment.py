@@ -118,9 +118,11 @@ def perform_experiment(
     tile_number_x=3,
     number_of_permutations=25, 
     target_size=(255,255,3),
+    load_size=(255,255,3),
     stitched=True,
     shuffle_permutations=True,
     one_hot_encoding=True,
+    crop=False,
     preprocessing_func=preprocess_input,
     test_mode=False,
     ):
@@ -247,6 +249,8 @@ def perform_experiment(
         tile_number_x=tile_number_x,
         max_perms=number_of_permutations,
         target_size=target_size,
+        load_size=load_size,
+        crop=crop,
         shuffle_permutations=shuffle_permutations,
         stitched=stitched,
         one_hot_encoding=one_hot_encoding,
@@ -365,6 +369,8 @@ def perform_experiment(
         validation_data=validation_generator_baseline) # should be correct
 
     score_improved = model_baseline.evaluate(test_generator_baseline, verbose=0) # should be correct
+    
+    list_of_models = [model_baseline, model_jigsaw, model_fine_tuning, model_improved]
 
     return (
         history_baseline, 
@@ -372,7 +378,8 @@ def perform_experiment(
         history_fine_tuning, 
         history_improved, 
         score_baseline, 
-        score_improved
+        score_improved,
+        list_of_models
     )
 
 
@@ -409,7 +416,8 @@ def main():
         file_list += current_file_list
         labels += [label] * len(current_file_list)
 
-    print(number_of_load := len(file_list))
+    number_of_load = len(file_list)
+    print(number_of_load)
     print(len(labels))
 
     number_of_files = 1000 #len(file_list)
@@ -429,7 +437,8 @@ def main():
         history_fine_tuning, 
         history_improved, 
         score_baseline, 
-        score_improved 
+        score_improved,
+        list_of_models
     ) = perform_experiment(
         image_set_A=image_set_A, 
         image_set_B=image_set_B, 

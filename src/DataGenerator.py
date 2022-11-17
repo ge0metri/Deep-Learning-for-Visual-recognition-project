@@ -1,7 +1,6 @@
 from keras.preprocessing.image import Iterator
 import numpy as np
-from keras_preprocessing.image import load_img
-from keras_preprocessing.image import img_to_array
+from tensorflow.keras.utils import load_img, img_to_array
 from helper import divide_by_255
 
 class DataGenerator(Iterator):
@@ -57,7 +56,8 @@ class DataGenerator(Iterator):
                 image = img_to_array(
                     load_img(
                         self.images[j], 
-                        target_size=self.target_size
+                        target_size=self.target_size,
+                        keep_aspect_ratio=True
                         )
                     ) 
             else:
@@ -73,7 +73,7 @@ class DataGenerator(Iterator):
     def next(self):
         with self.lock:
             index_array = next(self.index_generator)
-        return self.get_batches(index_array)
+        return self._get_batches_of_transformed_samples(index_array)
 
 
 def main():

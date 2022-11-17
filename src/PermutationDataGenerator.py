@@ -12,7 +12,7 @@ class PermutationDataGenerator(Iterator):
         self, input, batch_size=64,
         reuse = 1, tile_number_x = 3,
         max_perms=25, target_size=(255,255,3),
-        load_size=(255,255,3),
+        load_size=None,
         permutation_dict=None,
         stitched=False,
         shuffle=True,  
@@ -27,7 +27,7 @@ class PermutationDataGenerator(Iterator):
         
         # metadata about the image
         self.target_size = target_size
-        self.size_of_image = load_size
+        self.size_of_image = load_size or target_size
         self.tile_number_x = tile_number_x
         self.number_of_tiles = tile_number_x**2
 
