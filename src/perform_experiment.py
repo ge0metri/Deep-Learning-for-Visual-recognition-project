@@ -170,6 +170,7 @@ def perform_experiment(
     training_generator_baseline = DataGenerator(
         x_train,
         y_train,
+        target_size=target_size,
         preprocess=preprocess_input,
         shuffle=True)
     validation_generator_baseline = DataGenerator(
@@ -180,6 +181,7 @@ def perform_experiment(
     test_generator_baseline = DataGenerator(
         x_test,
         y_test,
+        target_size=target_size,
         preprocess=preprocess_input,
         shuffle=False)
 
